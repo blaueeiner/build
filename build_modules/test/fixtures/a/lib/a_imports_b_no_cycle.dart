@@ -1,3 +1,5 @@
+// @dart=2.9
+
 library a_imports_b_no_cycle;
 
 // ignore_for_file: unused_import

@@ -2,10 +2,12 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:convert';
 
-import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:build/build.dart';
 import 'package:meta/meta.dart';
 
@@ -102,8 +104,7 @@ class ModuleLibrary {
 
       if (directive is ImportDirective && directive.configurations.isNotEmpty) {
         conditionalDirectiveConfigurations = directive.configurations;
-      } else if (directive is ExportDirective &&
-          directive.configurations.isNotEmpty) {
+      } else if (directive is ExportDirective && directive.configurations.isNotEmpty) {
         conditionalDirectiveConfigurations = directive.configurations;
       }
       if (conditionalDirectiveConfigurations != null) {
@@ -146,8 +147,7 @@ class ModuleLibrary {
       return ModuleLibrary._nonImportable(id);
     }
 
-    final isEntryPoint =
-        (isLibDir && !id.path.startsWith('lib/src/')) || _hasMainMethod(parsed);
+    final isEntryPoint = (isLibDir && !id.path.startsWith('lib/src/')) || _hasMainMethod(parsed);
     return ModuleLibrary._fromCompilationUnit(id, isEntryPoint, parsed);
   }
 
@@ -163,8 +163,7 @@ class ModuleLibrary {
         deps: _deserializeAssetIds(json['deps'] as Iterable),
         parts: _deserializeAssetIds(json['parts'] as Iterable),
         sdkDeps: Set.of((json['sdkDeps'] as Iterable).cast<String>()),
-        conditionalDeps:
-            (json['conditionalDeps'] as Iterable).map((conditions) {
+        conditionalDeps: (json['conditionalDeps'] as Iterable).map((conditions) {
           return Map.of((conditions as Map<String, dynamic>)
               .map((k, v) => MapEntry(k, AssetId.parse(v as String))));
         }).toList(),
@@ -176,8 +175,7 @@ class ModuleLibrary {
         'deps': _deps.map((id) => id.toString()).toList(),
         'parts': parts.map((id) => id.toString()).toList(),
         'conditionalDeps': conditionalDeps
-            .map((conditions) =>
-                conditions.map((k, v) => MapEntry(k, v.toString())))
+            .map((conditions) => conditions.map((k, v) => MapEntry(k, v.toString())))
             .toList(),
         'sdkDeps': sdkDeps.toList(),
         'hasMain': hasMain,
@@ -190,8 +188,7 @@ class ModuleLibrary {
       for (var condition in conditions.keys) {
         if (condition == r'$default') continue;
         if (!condition.startsWith('dart.library.')) {
-          throw UnsupportedError(
-              '$condition not supported for config specific imports. Only the '
+          throw UnsupportedError('$condition not supported for config specific imports. Only the '
               'dart.library.<name> constants are supported.');
         }
         var library = condition.substring('dart.library.'.length);

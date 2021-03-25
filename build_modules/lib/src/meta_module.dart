@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 
 import 'package:build/build.dart';
@@ -27,37 +29,31 @@ String _topLevelDir(String path) {
     error = 'The path `$path` reaches outside the root directory.';
   }
   if (error != null) {
-    throw ArgumentError(
-        'Cannot compute top level dir for path `$path`. $error');
+    throw ArgumentError('Cannot compute top level dir for path `$path`. $error');
   }
   return parts.first;
 }
 
 /// Creates a module containing [componentLibraries].
-Module _moduleForComponent(
-    List<ModuleLibrary> componentLibraries, DartPlatform platform) {
+Module _moduleForComponent(List<ModuleLibrary> componentLibraries, DartPlatform platform) {
   // Name components based on first alphabetically sorted node, preferring
   // public srcs (not under lib/src).
   var sources = componentLibraries.map((n) => n.id).toSet();
   var nonSrcIds = sources.where((id) => !id.path.startsWith('lib/src/'));
-  var primaryId =
-      nonSrcIds.isNotEmpty ? nonSrcIds.reduce(_min) : sources.reduce(_min);
+  var primaryId = nonSrcIds.isNotEmpty ? nonSrcIds.reduce(_min) : sources.reduce(_min);
   // Expand to include all the part files of each node, these aren't
   // included as individual `_AssetNodes`s in `connectedComponents`.
   sources.addAll(componentLibraries.expand((n) => n.parts));
   var directDependencies = <AssetId>{}
     ..addAll(componentLibraries.expand((n) => n.depsForPlatform(platform)))
     ..removeAll(sources);
-  var isSupported = componentLibraries
-      .expand((l) => l.sdkDeps)
-      .every(platform.supportsLibrary);
+  var isSupported = componentLibraries.expand((l) => l.sdkDeps).every(platform.supportsLibrary);
   return Module(primaryId, sources, directDependencies, platform, isSupported);
 }
 
 /// Gets the local (same top level dir of the same package) transitive deps of
 /// [module] using [assetsToModules].
-Set<AssetId> _localTransitiveDeps(
-    Module module, Map<AssetId, Module> assetsToModules) {
+Set<AssetId> _localTransitiveDeps(Module module, Map<AssetId, Module> assetsToModules) {
   var localTransitiveDeps = <AssetId>{};
   var nextIds = module.directDependencies;
   var seenIds = <AssetId>{};
@@ -89,9 +85,7 @@ Map<AssetId, Set<AssetId>> _findReverseEntrypointDeps(
   }
   for (var module in entrypointModules) {
     for (var moduleDep in _localTransitiveDeps(module, assetsToModules)) {
-      reverseDeps
-          .putIfAbsent(moduleDep, () => <AssetId>{})
-          .add(module.primarySource);
+      reverseDeps.putIfAbsent(moduleDep, () => <AssetId>{}).add(module.primarySource);
     }
   }
   return reverseDeps;
@@ -107,8 +101,7 @@ Map<AssetId, Set<AssetId>> _findReverseEntrypointDeps(
 ///   * Else merge it into with others that are depended on by the same set of
 ///   entrypoints
 List<Module> _mergeModules(Iterable<Module> modules, Set<AssetId> entrypoints) {
-  var entrypointModules =
-      modules.where((m) => m.sources.any(entrypoints.contains)).toList();
+  var entrypointModules = modules.where((m) => m.sources.any(entrypoints.contains)).toList();
 
   // Groups of modules that can be merged into an existing entrypoint module.
   var entrypointModuleGroups = {
@@ -116,8 +109,7 @@ List<Module> _mergeModules(Iterable<Module> modules, Set<AssetId> entrypoints) {
   };
 
   // Maps modules to entrypoint modules that transitively depend on them.
-  var modulesToEntryPoints =
-      _findReverseEntrypointDeps(entrypointModules, modules);
+  var modulesToEntryPoints = _findReverseEntrypointDeps(entrypointModules, modules);
 
   // Modules which are not depended on by any entrypoint
   var standaloneModules = <Module>[];
@@ -156,8 +148,8 @@ List<Module> _mergeModules(Iterable<Module> modules, Set<AssetId> entrypoints) {
       .toList();
 }
 
-Module _withConsistentPrimarySource(Module m) => Module(m.sources.reduce(_min),
-    m.sources, m.directDependencies, m.platform, m.isSupported);
+Module _withConsistentPrimarySource(Module m) =>
+    Module(m.sources.reduce(_min), m.sources, m.directDependencies, m.platform, m.isSupported);
 
 T _min<T extends Comparable<T>>(T a, T b) => a.compareTo(b) < 0 ? a : b;
 
@@ -175,8 +167,7 @@ T _min<T extends Comparable<T>>(T a, T b) => a.compareTo(b) < 0 ? a : b;
 /// Part files are also tracked but ignored during computation of strongly
 /// connected components, as they must always be a part of the containing
 /// library's module.
-List<Module> _computeModules(
-    Map<AssetId, ModuleLibrary> libraries, DartPlatform platform) {
+List<Module> _computeModules(Map<AssetId, ModuleLibrary> libraries, DartPlatform platform) {
   assert(() {
     var dir = _topLevelDir(libraries.values.first.id.path);
     return libraries.values.every((l) => _topLevelDir(l.id.path) == dir);
@@ -192,11 +183,8 @@ List<Module> _computeModules(
       equals: (a, b) => a.id == b.id,
       hashCode: (l) => l.id.hashCode);
 
-  final entryIds =
-      libraries.values.where((l) => l.isEntryPoint).map((l) => l.id).toSet();
-  return _mergeModules(
-      connectedComponents.map((c) => _moduleForComponent(c, platform)),
-      entryIds);
+  final entryIds = libraries.values.where((l) => l.isEntryPoint).map((l) => l.id).toSet();
+  return _mergeModules(connectedComponents.map((c) => _moduleForComponent(c, platform)), entryIds);
 }
 
 class MetaModule {
@@ -205,21 +193,16 @@ class MetaModule {
   MetaModule(List<Module> modules) : modules = List.unmodifiable(modules);
 
   /// Generated factory constructor.
-  factory MetaModule.fromJson(Map<String, dynamic> json) =>
-      _$MetaModuleFromJson(json);
+  factory MetaModule.fromJson(Map<String, dynamic> json) => _$MetaModuleFromJson(json);
 
   Map<String, dynamic> toJson() => _$MetaModuleToJson(this);
 
-  static Future<MetaModule> forLibraries(
-      AssetReader reader,
-      List<AssetId> libraryIds,
-      ModuleStrategy strategy,
-      DartPlatform platform) async {
+  static Future<MetaModule> forLibraries(AssetReader reader, List<AssetId> libraryIds,
+      ModuleStrategy strategy, DartPlatform platform) async {
     var libraries = <ModuleLibrary>[];
     for (var id in libraryIds) {
       libraries.add(ModuleLibrary.deserialize(
-          id.changeExtension('').changeExtension('.dart'),
-          await reader.readAsString(id)));
+          id.changeExtension('').changeExtension('.dart'), await reader.readAsString(id)));
     }
     switch (strategy) {
       case ModuleStrategy.fine:
@@ -241,9 +224,8 @@ MetaModule _coarseModulesForLibraries(
     }
     librariesByDirectory[dir][library.id] = library;
   }
-  final modules = librariesByDirectory.values
-      .expand((libs) => _computeModules(libs, platform))
-      .toList();
+  final modules =
+      librariesByDirectory.values.expand((libs) => _computeModules(libs, platform)).toList();
   _sortModules(modules);
   return MetaModule(modules);
 }

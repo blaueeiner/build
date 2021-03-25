@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -27,8 +29,8 @@ final scratchSpaceResource = Resource<ScratchSpace>(() {
     scratchSpace.tempDir.createSync(recursive: true);
     scratchSpace.exists = true;
   }
-  var packageConfigFile = File(
-      p.join(scratchSpace.tempDir.path, '.dart_tool', 'package_config.json'));
+  var packageConfigFile =
+      File(p.join(scratchSpace.tempDir.path, '.dart_tool', 'package_config.json'));
   if (!packageConfigFile.existsSync()) {
     var originalConfigFile = File(p.join('.dart_tool', 'package_config.json'));
     var packageConfigContents = _scratchSpacePackageConfig(
@@ -51,8 +53,7 @@ final scratchSpaceResource = Resource<ScratchSpace>(() {
   while (true) {
     numTries++;
     if (numTries > 3) {
-      _logger
-          .warning('Failed to clean up temp dir ${scratchSpace.tempDir.path}.');
+      _logger.warning('Failed to clean up temp dir ${scratchSpace.tempDir.path}.');
       return;
     }
     try {
@@ -86,12 +87,10 @@ String _scratchSpacePackageConfig(String rootConfig, Uri packageConfigUri) {
   var parsedRootConfig = jsonDecode(rootConfig) as Map<String, dynamic>;
   var version = parsedRootConfig['configVersion'] as int;
   if (version != 2) {
-    throw UnsupportedError(
-        'Unsupported package_config.json version, got $version but only '
+    throw UnsupportedError('Unsupported package_config.json version, got $version but only '
         'version 2 is supported.');
   }
-  var packages =
-      (parsedRootConfig['packages'] as List).cast<Map<String, dynamic>>();
+  var packages = (parsedRootConfig['packages'] as List).cast<Map<String, dynamic>>();
   var foundRoot = false;
   for (var package in packages) {
     var rootUri = packageConfigUri.resolve(package['rootUri'] as String);

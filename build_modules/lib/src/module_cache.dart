@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:convert';
 
 import 'package:async/async.dart';
@@ -14,14 +16,13 @@ import 'modules.dart';
 Map<String, dynamic> _deserialize(List<int> bytes) =>
     jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
 
-List<int> _serialize(Map<String, dynamic> data) =>
-    utf8.encode(jsonEncode(data));
+List<int> _serialize(Map<String, dynamic> data) => utf8.encode(jsonEncode(data));
 
 final metaModuleCache = DecodingCache.resource(
     (m) => MetaModule.fromJson(_deserialize(m)), (m) => _serialize(m.toJson()));
 
-final moduleCache = DecodingCache.resource(
-    (m) => Module.fromJson(_deserialize(m)), (m) => _serialize(m.toJson()));
+final moduleCache =
+    DecodingCache.resource((m) => Module.fromJson(_deserialize(m)), (m) => _serialize(m.toJson()));
 
 /// A cache of objects decoded from written assets suitable for use as a
 /// [Resource].
@@ -72,8 +73,7 @@ class DecodingCache<T> {
           var previousDigest = await Result.release(entry.digest);
           entry.digest = Result.capture(reader.digest(id));
           if (await Result.release(entry.digest) != previousDigest) {
-            entry.value =
-                Result.capture(reader.readAsBytes(id).then(_fromBytes));
+            entry.value = Result.capture(reader.readAsBytes(id).then(_fromBytes));
           }
           entry
             ..needsCheck = false

@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 import 'dart:collection';
 
@@ -42,15 +44,12 @@ class Module {
     assert(modules.every((m) => m.platform == modules.first.platform));
 
     final allSources = HashSet.of(modules.expand((m) => m.sources));
-    final allDependencies =
-        HashSet.of(modules.expand((m) => m.directDependencies))
-          ..removeAll(allSources);
-    final primarySource =
-        allSources.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
+    final allDependencies = HashSet.of(modules.expand((m) => m.directDependencies))
+      ..removeAll(allSources);
+    final primarySource = allSources.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
     final isMissing = modules.any((m) => m.isMissing);
     final isSupported = modules.every((m) => m.isSupported);
-    return Module(primarySource, allSources, allDependencies,
-        modules.first.platform, isSupported,
+    return Module(primarySource, allSources, allDependencies, modules.first.platform, isSupported,
         isMissing: isMissing);
   }
 
@@ -109,12 +108,11 @@ class Module {
 
   final DartPlatform platform;
 
-  Module(this.primarySource, Iterable<AssetId> sources,
-      Iterable<AssetId> directDependencies, this.platform, this.isSupported,
+  Module(this.primarySource, Iterable<AssetId> sources, Iterable<AssetId> directDependencies,
+      this.platform, this.isSupported,
       {bool isMissing})
       : sources = UnmodifiableSetView(HashSet.of(sources)),
-        directDependencies =
-            UnmodifiableSetView(HashSet.of(directDependencies)),
+        directDependencies = UnmodifiableSetView(HashSet.of(directDependencies)),
         isMissing = isMissing ?? false;
 
   /// Generated factory constructor.
@@ -162,15 +160,14 @@ class Module {
     }
 
     if (missingModuleSources.isNotEmpty) {
-      throw await MissingModulesException.create(missingModuleSources,
-          transitiveDeps.values.toList()..add(this), buildStep);
+      throw await MissingModulesException.create(
+          missingModuleSources, transitiveDeps.values.toList()..add(this), buildStep);
     }
     if (throwIfUnsupported && unsupportedModules.isNotEmpty) {
       throw UnsupportedModules(unsupportedModules);
     }
     var orderedModules = stronglyConnectedComponents<Module>(
-        transitiveDeps.values,
-        (m) => m.directDependencies.map((s) => transitiveDeps[s]),
+        transitiveDeps.values, (m) => m.directDependencies.map((s) => transitiveDeps[s]),
         equals: (a, b) => a.primarySource == b.primarySource,
         hashCode: (m) => m.primarySource.hashCode);
     return orderedModules.map((c) => c.single).toList();

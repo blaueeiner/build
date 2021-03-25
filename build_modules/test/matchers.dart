@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:convert';
 
 import 'package:build_modules/src/meta_module.dart';
@@ -12,8 +14,7 @@ import 'package:test/test.dart';
 Matcher encodedMatchesModule(Module expected) => EncodedModuleMatcher(expected);
 
 /// Matches an encoded [MetaModule] against an [expected] Module instance.
-Matcher encodedMatchesMetaModule(MetaModule expected) =>
-    EncodedMetaModuleMatcher(expected);
+Matcher encodedMatchesMetaModule(MetaModule expected) => EncodedMetaModuleMatcher(expected);
 
 /// Matches a [Module] against an [expected] Module instance.
 Matcher matchesModule(Module expected) => ModuleMatcher(expected);
@@ -32,8 +33,7 @@ class EncodedMetaModuleMatcher extends Matcher {
     if (actual is! String) return false;
     var jSon = json.decode(actual as String) as Map<String, dynamic>;
     var meta = MetaModule.fromJson(jSon);
-    return unorderedMatches(expected.modules.map(matchesModule))
-        .matches(meta.modules, description);
+    return unorderedMatches(expected.modules.map(matchesModule)).matches(meta.modules, description);
   }
 
   @override
@@ -66,8 +66,7 @@ class ModuleMatcher extends Matcher {
   bool matches(actual, description) {
     if (actual is! Module) return false;
     return actual.primarySource == expected.primarySource &&
-        unorderedEquals(expected.sources)
-            .matches(actual.sources, description) &&
+        unorderedEquals(expected.sources).matches(actual.sources, description) &&
         unorderedEquals(expected.directDependencies)
             .matches(actual.directDependencies, description);
   }

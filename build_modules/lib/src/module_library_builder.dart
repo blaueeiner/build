@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 
 import 'package:build/build.dart';
@@ -33,7 +35,6 @@ class ModuleLibraryBuilder implements Builder {
         buildStep.inputId, await buildStep.readAsString(buildStep.inputId));
     if (!library.isImportable) return;
     await buildStep.writeAsString(
-        buildStep.inputId.changeExtension(moduleLibraryExtension),
-        library.serialize());
+        buildStep.inputId.changeExtension(moduleLibraryExtension), library.serialize());
   }
 }

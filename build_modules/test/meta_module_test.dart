@@ -2,18 +2,19 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 
 import 'package:build/build.dart';
-import 'package:build_test/build_test.dart';
-import 'package:test/test.dart';
-
 import 'package:build_modules/build_modules.dart';
 import 'package:build_modules/src/common.dart';
 import 'package:build_modules/src/meta_module.dart';
 import 'package:build_modules/src/module_library.dart';
 import 'package:build_modules/src/modules.dart';
 import 'package:build_modules/src/platform.dart';
+import 'package:build_test/build_test.dart';
+import 'package:test/test.dart';
 
 import 'matchers.dart';
 
@@ -32,25 +33,20 @@ void main() {
     return assets.toList();
   }
 
-  Future<MetaModule> metaModuleFromSources(
-      InMemoryAssetReader reader, List<AssetId> sources,
+  Future<MetaModule> metaModuleFromSources(InMemoryAssetReader reader, List<AssetId> sources,
       {DartPlatform platform}) async {
     platform ??= defaultPlatform;
     final libraries = (await Future.wait(sources
             .where((s) => s.package != r'$sdk')
-            .map((s) async =>
-                ModuleLibrary.fromSource(s, await reader.readAsString(s)))))
+            .map((s) async => ModuleLibrary.fromSource(s, await reader.readAsString(s)))))
         .where((l) => l.isImportable);
     for (final library in libraries) {
       reader.cacheStringAsset(
-          library.id.changeExtension(moduleLibraryExtension),
-          '${library.serialize()}');
+          library.id.changeExtension(moduleLibraryExtension), '${library.serialize()}');
     }
     return MetaModule.forLibraries(
         reader,
-        libraries
-            .map((l) => l.id.changeExtension(moduleLibraryExtension))
-            .toList(),
+        libraries.map((l) => l.id.changeExtension(moduleLibraryExtension)).toList(),
         ModuleStrategy.coarse,
         platform);
   }
@@ -277,8 +273,7 @@ void main() {
     expect(meta.modules, unorderedMatches(expectedModules));
   });
 
-  test('libs that aren\'t imported by entrypoints get their own modules',
-      () async {
+  test('libs that aren\'t imported by entrypoints get their own modules', () async {
     var assets = makeAssets({
       'myapp|lib/a.dart': '',
       'myapp|lib/src/a.dart': '''
@@ -416,8 +411,7 @@ void main() {
 
     var expectedModulesForPlatform = {
       htmlPlatform: [
-        matchesModule(
-            Module(primaryId, [primaryId], [htmlId], htmlPlatform, true)),
+        matchesModule(Module(primaryId, [primaryId], [htmlId], htmlPlatform, true)),
         matchesModule(Module(defaultId, [defaultId], [], htmlPlatform, true)),
         matchesModule(Module(htmlId, [htmlId], [], htmlPlatform, true)),
         matchesModule(Module(ioId, [ioId], [], htmlPlatform, false)),
@@ -440,10 +434,8 @@ void main() {
     };
 
     for (var platform in expectedModulesForPlatform.keys) {
-      var meta =
-          await metaModuleFromSources(reader, assets, platform: platform);
-      expect(
-          meta.modules, unorderedMatches(expectedModulesForPlatform[platform]),
+      var meta = await metaModuleFromSources(reader, assets, platform: platform);
+      expect(meta.modules, unorderedMatches(expectedModulesForPlatform[platform]),
           reason: meta.modules.map((m) => m.toJson()).toString());
     }
   });

@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
@@ -19,8 +21,7 @@ import 'platform.dart';
 ///
 /// Clean in this context means all dependencies are primary sources.
 /// Furthermore cyclic modules are merged into a single module.
-String metaModuleCleanExtension(DartPlatform platform) =>
-    '.${platform.name}.meta_module.clean';
+String metaModuleCleanExtension(DartPlatform platform) => '.${platform.name}.meta_module.clean';
 
 /// Creates `.meta_module.clean` file for any Dart library.
 ///
@@ -43,45 +44,38 @@ class MetaModuleCleanBuilder implements Builder {
 
   @override
   Future build(BuildStep buildStep) async {
-    var assetToModule = (await buildStep.fetchResource(_assetToModule))
-        .putIfAbsent(_platform, () => {});
-    var assetToPrimary = (await buildStep.fetchResource(_assetToPrimary))
-        .putIfAbsent(_platform, () => {});
+    var assetToModule =
+        (await buildStep.fetchResource(_assetToModule)).putIfAbsent(_platform, () => {});
+    var assetToPrimary =
+        (await buildStep.fetchResource(_assetToPrimary)).putIfAbsent(_platform, () => {});
     var modules = await _transitiveModules(
         buildStep, buildStep.inputId, assetToModule, assetToPrimary, _platform);
     var connectedComponents = stronglyConnectedComponents<Module>(
         modules,
-        (m) => m.directDependencies.map((d) =>
-            assetToModule[d] ??
-            Module(d, [d], [], _platform, false, isMissing: true)),
+        (m) => m.directDependencies
+            .map((d) => assetToModule[d] ?? Module(d, [d], [], _platform, false, isMissing: true)),
         equals: (a, b) => a.primarySource == b.primarySource,
         hashCode: (m) => m.primarySource.hashCode);
-    Module merge(List<Module> c) =>
-        _mergeComponent(c, assetToPrimary, _platform);
-    bool primarySourceInPackage(Module m) =>
-        m.primarySource.package == buildStep.inputId.package;
+    Module merge(List<Module> c) => _mergeComponent(c, assetToPrimary, _platform);
+    bool primarySourceInPackage(Module m) => m.primarySource.package == buildStep.inputId.package;
     // Ensure deterministic output by sorting the modules.
-    var cleanModules = SplayTreeSet<Module>(
-        (a, b) => a.primarySource.compareTo(b.primarySource))
+    var cleanModules = SplayTreeSet<Module>((a, b) => a.primarySource.compareTo(b.primarySource))
       ..addAll(connectedComponents.map(merge).where(primarySourceInPackage));
     await buildStep.writeAsString(
-        AssetId(buildStep.inputId.package,
-            'lib/${metaModuleCleanExtension(_platform)}'),
+        AssetId(buildStep.inputId.package, 'lib/${metaModuleCleanExtension(_platform)}'),
         jsonEncode(MetaModule(cleanModules.toList())));
   }
 }
 
 /// Map of [AssetId] to corresponding non clean containing [Module] per
 /// [DartPlatform].
-final _assetToModule = Resource<Map<DartPlatform, Map<AssetId, Module>>>(
-    () => {},
-    dispose: (map) => map.clear());
+final _assetToModule =
+    Resource<Map<DartPlatform, Map<AssetId, Module>>>(() => {}, dispose: (map) => map.clear());
 
 /// Map of [AssetId] to corresponding primary [AssetId] within the same
 /// clean [Module] per platform.
-final _assetToPrimary = Resource<Map<DartPlatform, Map<AssetId, AssetId>>>(
-    () => {},
-    dispose: (map) => map.clear());
+final _assetToPrimary =
+    Resource<Map<DartPlatform, Map<AssetId, AssetId>>>(() => {}, dispose: (map) => map.clear());
 
 /// Returns a set of all modules transitively reachable from the provided meta
 /// module asset.
@@ -107,8 +101,7 @@ Future<Set<Module>> _transitiveModules(
       assetToPrimary[source] = module.primarySource;
     }
     for (var dep in module.directDependencies) {
-      var depMetaAsset =
-          AssetId(dep.package, 'lib/${metaModuleExtension(platform)}');
+      var depMetaAsset = AssetId(dep.package, 'lib/${metaModuleExtension(platform)}');
       // The testing package is an odd package used by package:frontend_end
       // which doesn't really exist.
       // https://github.com/dart-lang/sdk/issues/32952
@@ -133,14 +126,13 @@ Future<Set<Module>> _transitiveModules(
 ///
 /// Note this will clean the module dependencies as the merge happens.
 /// The result will be that all dependencies are primary sources.
-Module _mergeComponent(List<Module> connectedComponent,
-    Map<AssetId, AssetId> assetToPrimary, DartPlatform platform) {
+Module _mergeComponent(
+    List<Module> connectedComponent, Map<AssetId, AssetId> assetToPrimary, DartPlatform platform) {
   var sources = <AssetId>{};
   var deps = <AssetId>{};
   // Sort the modules to deterministicly select the primary source.
-  var components =
-      SplayTreeSet<Module>((a, b) => a.primarySource.compareTo(b.primarySource))
-        ..addAll(connectedComponent);
+  var components = SplayTreeSet<Module>((a, b) => a.primarySource.compareTo(b.primarySource))
+    ..addAll(connectedComponent);
   var primarySource = components.first.primarySource;
   var isSupported = true;
   for (var module in connectedComponent) {
@@ -150,16 +142,13 @@ Module _mergeComponent(List<Module> connectedComponent,
       var primaryDep = assetToPrimary[dep];
       if (primaryDep == null) continue;
       // This dep is now merged into sources so skip it.
-      if (!components
-          .map((c) => c.sources)
-          .any((s) => s.contains(primaryDep))) {
+      if (!components.map((c) => c.sources).any((s) => s.contains(primaryDep))) {
         deps.add(primaryDep);
       }
     }
   }
   // Update map so that sources now point to the merged module.
-  var mergedModule =
-      Module(primarySource, sources, deps, platform, isSupported);
+  var mergedModule = Module(primarySource, sources, deps, platform, isSupported);
   for (var source in mergedModule.sources) {
     assetToPrimary[source] = mergedModule.primarySource;
   }

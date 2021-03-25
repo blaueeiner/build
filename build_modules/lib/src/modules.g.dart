@@ -1,5 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// @dart=2.9
+
 part of 'modules.dart';
 
 // **************************************************************************
@@ -9,10 +11,8 @@ part of 'modules.dart';
 Module _$ModuleFromJson(Map<String, dynamic> json) {
   return Module(
     const _AssetIdConverter().fromJson(json['p'] as List),
-    (json['s'] as List)
-        .map((e) => const _AssetIdConverter().fromJson(e as List)),
-    (json['d'] as List)
-        .map((e) => const _AssetIdConverter().fromJson(e as List)),
+    (json['s'] as List).map((e) => const _AssetIdConverter().fromJson(e as List)),
+    (json['d'] as List).map((e) => const _AssetIdConverter().fromJson(e as List)),
     const _DartPlatformConverter().fromJson(json['pf'] as String),
     json['is'] as bool,
     isMissing: json['m'] as bool ?? false,

@@ -2,17 +2,18 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:convert';
 
 import 'package:build/build.dart';
+import 'package:build_modules/build_modules.dart';
+import 'package:build_modules/src/meta_module.dart';
 import 'package:build_modules/src/meta_module_clean_builder.dart';
+import 'package:build_modules/src/platform.dart';
 import 'package:build_test/build_test.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
-
-import 'package:build_modules/build_modules.dart';
-import 'package:build_modules/src/meta_module.dart';
-import 'package:build_modules/src/platform.dart';
 
 import 'matchers.dart';
 
@@ -34,10 +35,8 @@ void main() {
       'a|lib/a.dart': 'import "package:b/b.dart"',
       'b|lib/b.dart': 'import "package:a/a.dart"',
     }, outputs: {
-      'a|lib/${metaModuleCleanExtension(platform)}':
-          encodedMatchesMetaModule(metaA),
-      'b|lib/${metaModuleCleanExtension(platform)}':
-          encodedMatchesMetaModule(metaB),
+      'a|lib/${metaModuleCleanExtension(platform)}': encodedMatchesMetaModule(metaA),
+      'b|lib/${metaModuleCleanExtension(platform)}': encodedMatchesMetaModule(metaB),
     });
   });
 
@@ -57,15 +56,12 @@ void main() {
       'a|lib/a.dart': 'import "package:b/b.dart"',
       'b|lib/b.dart': 'import "package:a/a.dart"',
     }, outputs: {
-      'a|lib/${metaModuleCleanExtension(platform)}':
-          encodedMatchesMetaModule(clean),
-      'b|lib/${metaModuleCleanExtension(platform)}':
-          encodedMatchesMetaModule(MetaModule([])),
+      'a|lib/${metaModuleCleanExtension(platform)}': encodedMatchesMetaModule(clean),
+      'b|lib/${metaModuleCleanExtension(platform)}': encodedMatchesMetaModule(MetaModule([])),
     });
   });
 
-  test('Warns about missing .meta_module.raw files from dependencies',
-      () async {
+  test('Warns about missing .meta_module.raw files from dependencies', () async {
     var moduleA = Module(assetA, [assetA], [assetB], platform, true);
     var metaA = MetaModule([moduleA]);
     var logs = <LogRecord>[];
@@ -73,16 +69,15 @@ void main() {
       'a|lib/${metaModuleExtension(platform)}': json.encode(metaA),
       'a|lib/a.dart': 'import "package:b/b.dart"',
     }, outputs: {
-      'a|lib/${metaModuleCleanExtension(platform)}':
-          encodedMatchesMetaModule(metaA),
+      'a|lib/${metaModuleCleanExtension(platform)}': encodedMatchesMetaModule(metaA),
     }, onLog: (r) {
       if (r.level >= Level.WARNING) logs.add(r);
     });
     expect(
         logs,
         orderedEquals([
-          predicate((LogRecord r) => r.message
-              .startsWith('Unable to read module information for package:b'))
+          predicate((LogRecord r) =>
+              r.message.startsWith('Unable to read module information for package:b'))
         ]));
   });
 }

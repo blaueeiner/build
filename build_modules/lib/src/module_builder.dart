@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 
 import 'package:build/build.dart';
@@ -33,27 +35,21 @@ class ModuleBuilder implements Builder {
   Future build(BuildStep buildStep) async {
     final cleanMetaModules = await buildStep.fetchResource(metaModuleCache);
     final metaModule = await cleanMetaModules.find(
-        AssetId(buildStep.inputId.package,
-            'lib/${metaModuleCleanExtension(_platform)}'),
+        AssetId(buildStep.inputId.package, 'lib/${metaModuleCleanExtension(_platform)}'),
         buildStep);
-    var outputModule = metaModule.modules.firstWhere(
-        (m) => m.primarySource == buildStep.inputId,
-        orElse: () => null);
+    var outputModule = metaModule.modules
+        .firstWhere((m) => m.primarySource == buildStep.inputId, orElse: () => null);
     if (outputModule == null) {
-      final serializedLibrary = await buildStep.readAsString(
-          buildStep.inputId.changeExtension(moduleLibraryExtension));
-      final libraryModule =
-          ModuleLibrary.deserialize(buildStep.inputId, serializedLibrary);
+      final serializedLibrary =
+          await buildStep.readAsString(buildStep.inputId.changeExtension(moduleLibraryExtension));
+      final libraryModule = ModuleLibrary.deserialize(buildStep.inputId, serializedLibrary);
       if (libraryModule.hasMain) {
-        outputModule = metaModule.modules
-            .firstWhere((m) => m.sources.contains(buildStep.inputId));
+        outputModule = metaModule.modules.firstWhere((m) => m.sources.contains(buildStep.inputId));
       }
     }
     if (outputModule == null) return;
     final modules = await buildStep.fetchResource(moduleCache);
     await modules.write(
-        buildStep.inputId.changeExtension(moduleExtension(_platform)),
-        buildStep,
-        outputModule);
+        buildStep.inputId.changeExtension(moduleExtension(_platform)), buildStep, outputModule);
   }
 }

@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 
 import 'package:build/build.dart';
@@ -14,8 +16,7 @@ import 'module_library_builder.dart';
 import 'platform.dart';
 
 /// The extension for serialized meta module assets for a specific platform.
-String metaModuleExtension(DartPlatform platform) =>
-    '.${platform.name}.meta_module.raw';
+String metaModuleExtension(DartPlatform platform) => '.${platform.name}.meta_module.raw';
 
 /// Creates `.meta_module` file for any Dart library.
 ///
@@ -42,13 +43,10 @@ class MetaModuleBuilder implements Builder {
   Future build(BuildStep buildStep) async {
     if (buildStep.inputId.package == r'$sdk') return;
 
-    var libraryAssets =
-        await buildStep.findAssets(Glob('**$moduleLibraryExtension')).toList();
+    var libraryAssets = await buildStep.findAssets(Glob('**$moduleLibraryExtension')).toList();
 
-    var metaModule = await MetaModule.forLibraries(
-        buildStep, libraryAssets, strategy, _platform);
-    var id = AssetId(
-        buildStep.inputId.package, 'lib/${metaModuleExtension(_platform)}');
+    var metaModule = await MetaModule.forLibraries(buildStep, libraryAssets, strategy, _platform);
+    var id = AssetId(buildStep.inputId.package, 'lib/${metaModuleExtension(_platform)}');
     var metaModules = await buildStep.fetchResource(metaModuleCache);
     await metaModules.write(id, buildStep, metaModule);
   }

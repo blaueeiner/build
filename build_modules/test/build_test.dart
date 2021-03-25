@@ -2,9 +2,10 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 @Tags(['presubmit-only'])
 @OnPlatform({'windows': Skip('line endings are different')})
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -33,10 +34,9 @@ void main() {
     expect(_changedGeneratedFiles(), isEmpty);
 
     // 2 - run build - should be no output, since nothing should change
-    var result = _runProc('pub${Platform.isWindows ? '.bat' : ''}',
-        ['run', 'build_runner', 'build']);
-    expect(result,
-        contains(RegExp(r'Succeeded after \S+( \S+)? with \d+ outputs')));
+    var result =
+        _runProc('pub${Platform.isWindows ? '.bat' : ''}', ['run', 'build_runner', 'build']);
+    expect(result, contains(RegExp(r'Succeeded after \S+( \S+)? with \d+ outputs')));
 
     // 3 - get a list of modified `.g.dart` files - should still be empty
     expect(_changedGeneratedFiles(), isEmpty);
@@ -58,8 +58,7 @@ String _runProc(String proc, List<String> args) {
   var result = Process.runSync(proc, args);
 
   if (result.exitCode != 0) {
-    throw ProcessException(
-        proc, args, result.stderr as String, result.exitCode);
+    throw ProcessException(proc, args, result.stderr as String, result.exitCode);
   }
   var stderr = result.stderr as String;
   if (stderr.isNotEmpty) print('stderr: $stderr');

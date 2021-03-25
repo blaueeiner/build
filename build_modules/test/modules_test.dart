@@ -2,13 +2,14 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:convert';
 
 import 'package:build/build.dart';
+import 'package:build_modules/build_modules.dart';
 import 'package:build_test/build_test.dart';
 import 'package:test/test.dart';
-
-import 'package:build_modules/build_modules.dart';
 
 void main() {
   final platform = DartPlatform.register('test', ['html']);
@@ -19,10 +20,9 @@ void main() {
     final transitiveDepId = AssetId('b', 'lib/b.dart');
     final deepTransitiveDepId = AssetId('b', 'lib/src/dep.dart');
     final rootModule = Module(rootId, [rootId], [directDepId], platform, true);
-    final directDepModule =
-        Module(directDepId, [directDepId], [transitiveDepId], platform, true);
-    final transitiveDepModule = Module(transitiveDepId, [transitiveDepId],
-        [deepTransitiveDepId], platform, true);
+    final directDepModule = Module(directDepId, [directDepId], [transitiveDepId], platform, true);
+    final transitiveDepModule =
+        Module(transitiveDepId, [transitiveDepId], [deepTransitiveDepId], platform, true);
     final deepTransitiveDepModule =
         Module(deepTransitiveDepId, [deepTransitiveDepId], [], platform, true);
 
@@ -33,10 +33,9 @@ void main() {
                 'lib/a${moduleExtension(platform)}': ['.transitive']
               },
               build: expectAsync2((buildStep, _) async {
-                var transitiveDeps =
-                    (await rootModule.computeTransitiveDependencies(buildStep))
-                        .map((m) => m.primarySource)
-                        .toList();
+                var transitiveDeps = (await rootModule.computeTransitiveDependencies(buildStep))
+                    .map((m) => m.primarySource)
+                    .toList();
                 expect(
                     transitiveDeps,
                     unorderedEquals([
@@ -44,23 +43,15 @@ void main() {
                       transitiveDepModule.primarySource,
                       deepTransitiveDepModule.primarySource,
                     ]));
-                expect(
-                    transitiveDeps.indexOf(transitiveDepModule.primarySource),
-                    lessThan(
-                        transitiveDeps.indexOf(directDepModule.primarySource)));
-                expect(
-                    transitiveDeps
-                        .indexOf(deepTransitiveDepModule.primarySource),
-                    lessThan(transitiveDeps
-                        .indexOf(transitiveDepModule.primarySource)));
+                expect(transitiveDeps.indexOf(transitiveDepModule.primarySource),
+                    lessThan(transitiveDeps.indexOf(directDepModule.primarySource)));
+                expect(transitiveDeps.indexOf(deepTransitiveDepModule.primarySource),
+                    lessThan(transitiveDeps.indexOf(transitiveDepModule.primarySource)));
               })),
           {
-            'a|lib/a${moduleExtension(platform)}':
-                jsonEncode(rootModule.toJson()),
-            'a|lib/src/dep${moduleExtension(platform)}':
-                jsonEncode(directDepModule.toJson()),
-            'b|lib/b${moduleExtension(platform)}':
-                jsonEncode(transitiveDepModule.toJson()),
+            'a|lib/a${moduleExtension(platform)}': jsonEncode(rootModule.toJson()),
+            'a|lib/src/dep${moduleExtension(platform)}': jsonEncode(directDepModule.toJson()),
+            'b|lib/b${moduleExtension(platform)}': jsonEncode(transitiveDepModule.toJson()),
             'b|lib/src/dep${moduleExtension(platform)}':
                 jsonEncode(deepTransitiveDepModule.toJson()),
           });
@@ -88,12 +79,9 @@ Please check the following imports:
 '''))));
               })),
           {
-            'a|lib/a${moduleExtension(platform)}':
-                jsonEncode(rootModule.toJson()),
-            'a|lib/src/dep${moduleExtension(platform)}':
-                jsonEncode(directDepModule.toJson()),
-            'b|lib/b${moduleExtension(platform)}':
-                jsonEncode(transitiveDepModule.toJson()),
+            'a|lib/a${moduleExtension(platform)}': jsonEncode(rootModule.toJson()),
+            'a|lib/src/dep${moduleExtension(platform)}': jsonEncode(directDepModule.toJson()),
+            'b|lib/b${moduleExtension(platform)}': jsonEncode(transitiveDepModule.toJson()),
             // No module for b|lib/src/dep.dart
             'b|lib/b.dart': 'import \'src/dep.dart\';',
           });
@@ -101,8 +89,7 @@ Please check the following imports:
 
     group('unsupported modules', () {
       test('are not allowed as the root', () async {
-        final unsupportedRootModule =
-            Module(rootId, [rootId], [directDepId], platform, false);
+        final unsupportedRootModule = Module(rootId, [rootId], [directDepId], platform, false);
 
         await testBuilder(
             TestBuilder(
@@ -114,26 +101,22 @@ Please check the following imports:
                       () => rootModule.computeTransitiveDependencies(buildStep,
                           throwIfUnsupported: true),
                       throwsA(isA<UnsupportedModules>().having(
-                          (e) =>
-                              e.unsupportedModules.map((m) => m.primarySource),
+                          (e) => e.unsupportedModules.map((m) => m.primarySource),
                           'unsupportedModules',
                           equals([unsupportedRootModule.primarySource]))));
                 })),
             {
-              'a|lib/a${moduleExtension(platform)}':
-                  jsonEncode(unsupportedRootModule.toJson()),
-              'a|lib/src/dep${moduleExtension(platform)}':
-                  jsonEncode(directDepModule.toJson()),
-              'b|lib/b${moduleExtension(platform)}':
-                  jsonEncode(transitiveDepModule.toJson()),
+              'a|lib/a${moduleExtension(platform)}': jsonEncode(unsupportedRootModule.toJson()),
+              'a|lib/src/dep${moduleExtension(platform)}': jsonEncode(directDepModule.toJson()),
+              'b|lib/b${moduleExtension(platform)}': jsonEncode(transitiveDepModule.toJson()),
               'b|lib/src/dep${moduleExtension(platform)}':
                   jsonEncode(deepTransitiveDepModule.toJson()),
             });
       });
 
       test('are not allowed in immediate deps', () async {
-        final unsupportedDirectDepModule = Module(
-            directDepId, [directDepId], [transitiveDepId], platform, false);
+        final unsupportedDirectDepModule =
+            Module(directDepId, [directDepId], [transitiveDepId], platform, false);
 
         await testBuilder(
             TestBuilder(
@@ -145,26 +128,23 @@ Please check the following imports:
                       () => rootModule.computeTransitiveDependencies(buildStep,
                           throwIfUnsupported: true),
                       throwsA(isA<UnsupportedModules>().having(
-                          (e) =>
-                              e.unsupportedModules.map((m) => m.primarySource),
+                          (e) => e.unsupportedModules.map((m) => m.primarySource),
                           'unsupportedModules',
                           equals([unsupportedDirectDepModule.primarySource]))));
                 })),
             {
-              'a|lib/a${moduleExtension(platform)}':
-                  jsonEncode(rootModule.toJson()),
+              'a|lib/a${moduleExtension(platform)}': jsonEncode(rootModule.toJson()),
               'a|lib/src/dep${moduleExtension(platform)}':
                   jsonEncode(unsupportedDirectDepModule.toJson()),
-              'b|lib/b${moduleExtension(platform)}':
-                  jsonEncode(transitiveDepModule.toJson()),
+              'b|lib/b${moduleExtension(platform)}': jsonEncode(transitiveDepModule.toJson()),
               'b|lib/src/dep${moduleExtension(platform)}':
                   jsonEncode(deepTransitiveDepModule.toJson()),
             });
       });
 
       test('are not allowed in transitive deps', () async {
-        final unsupportedTransitiveDepDepModule = Module(transitiveDepId,
-            [transitiveDepId], [deepTransitiveDepId], platform, false);
+        final unsupportedTransitiveDepDepModule =
+            Module(transitiveDepId, [transitiveDepId], [deepTransitiveDepId], platform, false);
 
         await testBuilder(
             TestBuilder(
@@ -176,18 +156,13 @@ Please check the following imports:
                       () => rootModule.computeTransitiveDependencies(buildStep,
                           throwIfUnsupported: true),
                       throwsA(isA<UnsupportedModules>().having(
-                          (e) =>
-                              e.unsupportedModules.map((m) => m.primarySource),
+                          (e) => e.unsupportedModules.map((m) => m.primarySource),
                           'unsupportedModules',
-                          equals([
-                            unsupportedTransitiveDepDepModule.primarySource
-                          ]))));
+                          equals([unsupportedTransitiveDepDepModule.primarySource]))));
                 })),
             {
-              'a|lib/a${moduleExtension(platform)}':
-                  jsonEncode(rootModule.toJson()),
-              'a|lib/src/dep${moduleExtension(platform)}':
-                  jsonEncode(directDepModule.toJson()),
+              'a|lib/a${moduleExtension(platform)}': jsonEncode(rootModule.toJson()),
+              'a|lib/src/dep${moduleExtension(platform)}': jsonEncode(directDepModule.toJson()),
               'b|lib/b${moduleExtension(platform)}':
                   jsonEncode(unsupportedTransitiveDepDepModule.toJson()),
               'b|lib/src/dep${moduleExtension(platform)}':

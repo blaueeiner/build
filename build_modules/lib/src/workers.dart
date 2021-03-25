@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
@@ -18,9 +20,8 @@ import 'scratch_space.dart';
 final sdkDir = p.dirname(p.dirname(Platform.resolvedExecutable));
 
 // If no terminal is attached, prevent a new one from launching.
-final _processMode = stdin.hasTerminal
-    ? ProcessStartMode.normal
-    : ProcessStartMode.detachedWithStdio;
+final _processMode =
+    stdin.hasTerminal ? ProcessStartMode.normal : ProcessStartMode.detachedWithStdio;
 
 /// Completes once the dartdevk workers have been shut down.
 Future<void> get dartdevkWorkersAreDone =>
@@ -28,8 +29,7 @@ Future<void> get dartdevkWorkersAreDone =>
 Completer<void> _dartdevkWorkersAreDoneCompleter;
 
 /// Completes once the dart2js workers have been shut down.
-Future<void> get dart2jsWorkersAreDone =>
-    _dart2jsWorkersAreDoneCompleter?.future ?? Future.value();
+Future<void> get dart2jsWorkersAreDone => _dart2jsWorkersAreDoneCompleter?.future ?? Future.value();
 Completer<void> _dart2jsWorkersAreDoneCompleter;
 
 /// Completes once the common frontend workers have been shut down.
@@ -42,8 +42,7 @@ final int _defaultMaxWorkers = min((Platform.numberOfProcessors / 2).ceil(), 4);
 const _maxWorkersEnvVar = 'BUILD_MAX_WORKERS_PER_TASK';
 
 final int maxWorkersPerTask = () {
-  var toParse =
-      Platform.environment[_maxWorkersEnvVar] ?? '$_defaultMaxWorkers';
+  var toParse = Platform.environment[_maxWorkersEnvVar] ?? '$_defaultMaxWorkers';
   var parsed = int.tryParse(toParse);
   if (parsed == null) {
     log.warning('Invalid value for $_maxWorkersEnvVar environment variable, '
@@ -58,14 +57,9 @@ final int maxWorkersPerTask = () {
 BazelWorkerDriver get _dartdevkDriver {
   _dartdevkWorkersAreDoneCompleter ??= Completer<void>();
   return __dartdevkDriver ??= BazelWorkerDriver(
-      () => Process.start(
-          p.join(sdkDir, 'bin', 'dart'),
-          [
-            p.join(sdkDir, 'bin', 'snapshots', 'dartdevc.dart.snapshot'),
-            '--persistent_worker'
-          ],
-          mode: _processMode,
-          workingDirectory: scratchSpace.tempDir.path),
+      () => Process.start(p.join(sdkDir, 'bin', 'dart'),
+          [p.join(sdkDir, 'bin', 'snapshots', 'dartdevc.dart.snapshot'), '--persistent_worker'],
+          mode: _processMode, workingDirectory: scratchSpace.tempDir.path),
       maxWorkers: maxWorkersPerTask);
 }
 
@@ -132,8 +126,8 @@ Dart2JsBatchWorkerPool __dart2jsWorkerPool;
 
 /// Resource for fetching the current [Dart2JsBatchWorkerPool] for dart2js.
 @Deprecated('Will be removed in build_modules version 3.x, no longer used')
-final dart2JsWorkerResource = Resource<Dart2JsBatchWorkerPool>(
-    () => _dart2jsWorkerPool, beforeExit: () async {
+final dart2JsWorkerResource =
+    Resource<Dart2JsBatchWorkerPool>(() => _dart2jsWorkerPool, beforeExit: () async {
   await _dart2jsWorkerPool.terminateWorkers();
   _dart2jsWorkersAreDoneCompleter.complete();
   _dart2jsWorkersAreDoneCompleter = null;
@@ -167,15 +161,13 @@ class Dart2JsBatchWorkerPool {
     () async {
       while (_workQueue.isNotEmpty) {
         _Dart2JsWorker worker;
-        if (_availableWorkers.isEmpty &&
-            _allWorkers.length < maxWorkersPerTask) {
+        if (_availableWorkers.isEmpty && _allWorkers.length < maxWorkersPerTask) {
           worker = _Dart2JsWorker(_spawnWorker);
           _allWorkers.add(worker);
         }
 
-        _Dart2JsWorker nextWorker() => _availableWorkers.isNotEmpty
-            ? _availableWorkers.removeFirst()
-            : null;
+        _Dart2JsWorker nextWorker() =>
+            _availableWorkers.isNotEmpty ? _availableWorkers.removeFirst() : null;
 
         worker ??= nextWorker();
         while (worker == null) {
@@ -214,19 +206,15 @@ class _Dart2JsWorker {
   Stream<String> __workerStderrLines;
   Stream<String> get _workerStderrLines {
     assert(__worker != null);
-    return __workerStderrLines ??= __worker.stderr
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .asBroadcastStream();
+    return __workerStderrLines ??=
+        __worker.stderr.transform(utf8.decoder).transform(const LineSplitter()).asBroadcastStream();
   }
 
   Stream<String> __workerStdoutLines;
   Stream<String> get _workerStdoutLines {
     assert(__worker != null);
-    return __workerStdoutLines ??= __worker.stdout
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .asBroadcastStream();
+    return __workerStdoutLines ??=
+        __worker.stdout.transform(utf8.decoder).transform(const LineSplitter()).asBroadcastStream();
   }
 
   Process __worker;
@@ -242,8 +230,7 @@ class _Dart2JsWorker {
           __worker = null;
           __workerStdoutLines = null;
           __workerStderrLines = null;
-          _currentJobResult
-              ?.completeError('Dart2js exited with an unknown error');
+          _currentJobResult?.completeError('Dart2js exited with an unknown error');
         }));
       }
       return __worker;
@@ -272,8 +259,8 @@ class _Dart2JsWorker {
       var sawError = false;
       var stderrListener = _workerStderrLines.listen((line) {
         if (line == '>>> EOF STDERR') {
-          _currentJobResult?.complete(
-              Dart2JsResult(!sawError, 'Dart2Js finished with:\n\n$output'));
+          _currentJobResult
+              ?.complete(Dart2JsResult(!sawError, 'Dart2Js finished with:\n\n$output'));
         }
         if (!line.startsWith('>>> ')) {
           output.writeln(line);

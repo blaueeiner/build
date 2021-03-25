@@ -2,25 +2,24 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-import 'package:build/build.dart';
-import 'package:build_test/build_test.dart';
-import 'package:test/test.dart';
+// @dart=2.9
 
+import 'package:build/build.dart';
 import 'package:build_modules/src/module_library.dart';
 import 'package:build_modules/src/platform.dart';
+import 'package:build_test/build_test.dart';
+import 'package:test/test.dart';
 
 void main() {
   final platform = DartPlatform.register('test', ['async']);
 
   test('Treats libraries as importable', () async {
-    final library =
-        ModuleLibrary.fromSource(makeAssetId('myapp|lib/a.dart'), '');
+    final library = ModuleLibrary.fromSource(makeAssetId('myapp|lib/a.dart'), '');
     expect(library.isImportable, true);
   });
 
   test('Treats parts as non-importable', () async {
-    final library = ModuleLibrary.fromSource(
-        makeAssetId('myapp|lib/a.dart'), "part of 'b.dart'\n");
+    final library = ModuleLibrary.fromSource(makeAssetId('myapp|lib/a.dart'), "part of 'b.dart'\n");
     expect(library.isImportable, false);
   });
 
@@ -51,26 +50,23 @@ void main() {
   });
 
   test('treats lib/ as entrypoint', () async {
-    final library =
-        ModuleLibrary.fromSource(makeAssetId('myapp|lib/a.dart'), '');
+    final library = ModuleLibrary.fromSource(makeAssetId('myapp|lib/a.dart'), '');
     expect(library.isEntryPoint, true);
   });
 
   test('treats lib/src as non-entrypoint', () async {
-    final library =
-        ModuleLibrary.fromSource(makeAssetId('myapp|lib/src/a.dart'), '');
+    final library = ModuleLibrary.fromSource(makeAssetId('myapp|lib/src/a.dart'), '');
     expect(library.isEntryPoint, false);
   });
 
   test('treats bin/executable as entrypoint', () async {
-    final library = ModuleLibrary.fromSource(
-        makeAssetId('myapp|bin/executable.dart'), 'void main() {}');
+    final library =
+        ModuleLibrary.fromSource(makeAssetId('myapp|bin/executable.dart'), 'void main() {}');
     expect(library.isEntryPoint, true);
   });
 
   test('treats bin/utility as non-entrypoint', () async {
-    final library =
-        ModuleLibrary.fromSource(makeAssetId('myapp|bin/executable.dart'), '');
+    final library = ModuleLibrary.fromSource(makeAssetId('myapp|bin/executable.dart'), '');
     expect(library.isEntryPoint, false);
   });
 
@@ -79,8 +75,7 @@ void main() {
         makeAssetId('myapp|lib/a.dart'),
         "part 'b.dart';\n"
         "part 'package:dep/dep.dart';\n");
-    expect(library.parts,
-        {makeAssetId('myapp|lib/b.dart'), makeAssetId('dep|lib/dep.dart')});
+    expect(library.parts, {makeAssetId('myapp|lib/b.dart'), makeAssetId('dep|lib/dep.dart')});
   });
 
   test('Parses platform specific imports', () async {
@@ -96,12 +91,10 @@ void main() {
     expect(library.depsForPlatform(DartPlatform.register('vm', ['io'])), {
       makeAssetId('myapp|lib/for_vm.dart'),
     });
-    expect(
-        library.depsForPlatform(DartPlatform.register('dart2js', ['html'])), {
+    expect(library.depsForPlatform(DartPlatform.register('dart2js', ['html'])), {
       makeAssetId('myapp|lib/for_web.dart'),
     });
-    expect(
-        library.depsForPlatform(DartPlatform.register('dartdevc', ['html'])), {
+    expect(library.depsForPlatform(DartPlatform.register('dartdevc', ['html'])), {
       makeAssetId('myapp|lib/for_web.dart'),
     });
   });
@@ -111,7 +104,6 @@ void main() {
     expect(ModuleLibrary.fromSource(id, '').hasMain, false);
     expect(ModuleLibrary.fromSource(id, 'main() {}').hasMain, true);
     expect(ModuleLibrary.fromSource(id, 'main(args) {}').hasMain, true);
-    expect(ModuleLibrary.fromSource(id, 'main(args, receivePort) {}').hasMain,
-        true);
+    expect(ModuleLibrary.fromSource(id, 'main(args, receivePort) {}').hasMain, true);
   });
 }

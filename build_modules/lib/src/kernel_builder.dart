@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
@@ -95,8 +97,7 @@ class KernelBuilder implements Builder {
       @Deprecated(_deprecatedExperimentsMessage) Iterable<String> experiments})
       : platformSdk = platformSdk ?? sdkDir,
         kernelTargetName = kernelTargetName ?? platform.name,
-        librariesPath = librariesPath ??
-            p.join(platformSdk ?? sdkDir, 'lib', 'libraries.json'),
+        librariesPath = librariesPath ?? p.join(platformSdk ?? sdkDir, 'lib', 'libraries.json'),
         useIncrementalCompiler = useIncrementalCompiler ?? false,
         trackUnusedInputs = trackUnusedInputs ?? false,
         buildExtensions = {
@@ -107,12 +108,10 @@ class KernelBuilder implements Builder {
   @override
   Future build(BuildStep buildStep) async {
     var module = Module.fromJson(
-        json.decode(await buildStep.readAsString(buildStep.inputId))
-            as Map<String, dynamic>);
+        json.decode(await buildStep.readAsString(buildStep.inputId)) as Map<String, dynamic>);
     // Entrypoints always have a `.module` file for ease of looking them up,
     // but they might not be the primary source.
-    if (module.primarySource.changeExtension(moduleExtension(platform)) !=
-        buildStep.inputId) {
+    if (module.primarySource.changeExtension(moduleExtension(platform)) != buildStep.inputId) {
       return;
     }
 
@@ -172,8 +171,7 @@ Future<void> _createKernel(
   await buildStep.trackStage('CollectDeps', () async {
     var sourceDeps = <AssetId>[];
 
-    await _findModuleDeps(
-        module, kernelDeps, sourceDeps, buildStep, outputExtension);
+    await _findModuleDeps(module, kernelDeps, sourceDeps, buildStep, outputExtension);
 
     var allAssetIds = <AssetId>{
       ...module.sources,
@@ -184,8 +182,7 @@ Future<void> _createKernel(
 
     if (trackUnusedInputs) {
       usedInputsFile = await File(p.join(
-              (await Directory.systemTemp.createTemp('kernel_builder_')).path,
-              'used_inputs.txt'))
+              (await Directory.systemTemp.createTemp('kernel_builder_')).path, 'used_inputs.txt'))
           .create();
       kernelInputPathToId = {};
     }
@@ -212,11 +209,10 @@ Future<void> _createKernel(
   try {
     var frontendWorker = await buildStep.fetchResource(frontendDriverResource);
     var response = await frontendWorker.doWork(request,
-        trackWork: (response) => buildStep
-            .trackStage('Kernel Generate', () => response, isExternal: true));
+        trackWork: (response) =>
+            buildStep.trackStage('Kernel Generate', () => response, isExternal: true));
     if (response.exitCode != EXIT_CODE_OK || !await outputFile.exists()) {
-      throw KernelException(
-          outputId, '${request.arguments.join(' ')}\n${response.output}');
+      throw KernelException(outputId, '${request.arguments.join(' ')}\n${response.output}');
     }
 
     if (response.output?.isEmpty == false) {
@@ -229,8 +225,7 @@ Future<void> _createKernel(
     // Note that we only want to do this on success, we can't trust the unused
     // inputs if there is a failure.
     if (usedInputsFile != null) {
-      await reportUnusedKernelInputs(
-          usedInputsFile, kernelDeps, kernelInputPathToId, buildStep);
+      await reportUnusedKernelInputs(usedInputsFile, kernelDeps, kernelInputPathToId, buildStep);
     }
   } finally {
     await usedInputsFile?.parent?.delete(recursive: true);
@@ -249,11 +244,8 @@ Future<void> _createKernel(
 ///   would be unsafe to do so in that case).
 /// - No used dependencies are reported (it is assumed something went wrong
 ///   or there were zero deps to begin with).
-Future<void> reportUnusedKernelInputs(
-    File usedInputsFile,
-    Iterable<AssetId> transitiveKernelDeps,
-    Map<String, AssetId> inputPathToId,
-    BuildStep buildStep) async {
+Future<void> reportUnusedKernelInputs(File usedInputsFile, Iterable<AssetId> transitiveKernelDeps,
+    Map<String, AssetId> inputPathToId, BuildStep buildStep) async {
   var usedPaths = await usedInputsFile.readAsLines();
   if (usedPaths.isEmpty || usedPaths.first == '') return;
 
@@ -271,8 +263,7 @@ Future<void> reportUnusedKernelInputs(
     return;
   }
 
-  buildStep.reportUnusedAssets(
-      transitiveKernelDeps.where((id) => !usedIds.contains(id)));
+  buildStep.reportUnusedAssets(transitiveKernelDeps.where((id) => !usedIds.contains(id)));
 }
 
 /// Finds the transitive dependencies of [root] and categorizes them as
@@ -282,16 +273,12 @@ Future<void> reportUnusedKernelInputs(
 /// transitive dependencies have readable kernel files. If any module has no
 /// readable kernel file then it, and all of it's dependents will be categorized
 /// as [sourceDeps] which will have all of their [Module.sources].
-Future<void> _findModuleDeps(
-    Module root,
-    List<AssetId> kernelDeps,
-    List<AssetId> sourceDeps,
-    BuildStep buildStep,
-    String outputExtension) async {
+Future<void> _findModuleDeps(Module root, List<AssetId> kernelDeps, List<AssetId> sourceDeps,
+    BuildStep buildStep, String outputExtension) async {
   final resolvedModules = await _resolveTransitiveModules(root, buildStep);
 
-  final sourceOnly = await _parentsOfMissingKernelFiles(
-      resolvedModules, buildStep, outputExtension);
+  final sourceOnly =
+      await _parentsOfMissingKernelFiles(resolvedModules, buildStep, outputExtension);
 
   for (final module in resolvedModules) {
     if (sourceOnly.contains(module.primarySource)) {
@@ -303,14 +290,12 @@ Future<void> _findModuleDeps(
 }
 
 /// The transitive dependencies of [root], not including [root] itself.
-Future<List<Module>> _resolveTransitiveModules(
-    Module root, BuildStep buildStep) async {
+Future<List<Module>> _resolveTransitiveModules(Module root, BuildStep buildStep) async {
   var missing = <AssetId>{};
   var modules = await crawlAsync<AssetId, Module /*?*/ >(
           [root.primarySource],
           (id) => buildStep.fetchResource(moduleCache).then((c) async {
-                var moduleId =
-                    id.changeExtension(moduleExtension(root.platform));
+                var moduleId = id.changeExtension(moduleExtension(root.platform));
                 var module = await c.find(moduleId, buildStep);
                 if (module == null) {
                   missing.add(moduleId);
@@ -325,8 +310,7 @@ Future<List<Module>> _resolveTransitiveModules(
       .toList();
 
   if (missing.isNotEmpty) {
-    throw await MissingModulesException.create(
-        missing, [...modules, root], buildStep);
+    throw await MissingModulesException.create(missing, [...modules, root], buildStep);
   }
 
   return modules;
@@ -345,8 +329,7 @@ Future<Set<AssetId>> _parentsOfMissingKernelFiles(
     for (final dep in module.directDependencies) {
       parents.putIfAbsent(dep, () => <AssetId>{}).add(module.primarySource);
     }
-    if (!await buildStep
-        .canRead(module.primarySource.changeExtension(outputExtension))) {
+    if (!await buildStep.canRead(module.primarySource.changeExtension(outputExtension))) {
       sourceOnly.add(module.primarySource);
     }
   }
@@ -384,8 +367,8 @@ Future<void> _addRequestArguments(
 }) async {
   // Add all kernel outlines as summary inputs, with digests.
   var inputs = await Future.wait(transitiveKernelDeps.map((id) async {
-    var relativePath = p.url.relative(scratchSpace.fileFor(id).uri.path,
-        from: scratchSpace.tempDir.uri.path);
+    var relativePath =
+        p.url.relative(scratchSpace.fileFor(id).uri.path, from: scratchSpace.tempDir.uri.path);
     var path = '$multiRootScheme:///$relativePath';
     if (kernelInputPathToId != null) {
       kernelInputPathToId[path] = id;
@@ -407,10 +390,8 @@ Future<void> _addRequestArguments(
       '--reuse-compiler-result',
       '--use-incremental-compiler',
     ],
-    if (usedInputsFile != null)
-      '--used-inputs=${usedInputsFile.uri.toFilePath()}',
-    for (var input in inputs)
-      '--input-${summaryOnly ? 'summary' : 'linked'}=${input.path}',
+    if (usedInputsFile != null) '--used-inputs=${usedInputsFile.uri.toFilePath()}',
+    for (var input in inputs) '--input-${summaryOnly ? 'summary' : 'linked'}=${input.path}',
     for (var experiment in experiments) '--enable-experiment=$experiment',
     '--${soundNullSafety ? '' : 'no-'}sound-null-safety',
     for (var source in module.sources) _sourceArg(source),
@@ -426,9 +407,7 @@ Future<void> _addRequestArguments(
 }
 
 String _sourceArg(AssetId id) {
-  var uri = id.path.startsWith('lib')
-      ? canonicalUriFor(id)
-      : '$multiRootScheme:///${id.path}';
+  var uri = id.path.startsWith('lib') ? canonicalUriFor(id) : '$multiRootScheme:///${id.path}';
   return '--source=$uri';
 }
 

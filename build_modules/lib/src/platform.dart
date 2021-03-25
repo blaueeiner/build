@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+// @dart=2.9
+
 /// A supported "platform" for compilation of Dart libraries.
 ///
 /// Each "platform" has its own compilation pipeline and builders, and could
@@ -41,8 +43,7 @@ class DartPlatform {
       throw DartPlatformAlreadyRegistered(name);
     }
 
-    return _platformsByName[name] =
-        DartPlatform._(name, List.unmodifiable(supportedLibraries));
+    return _platformsByName[name] = DartPlatform._(name, List.unmodifiable(supportedLibraries));
   }
 
   const DartPlatform._(this.name, this._supportedLibraries);
