@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
+
 
 import 'dart:async';
 
@@ -19,7 +19,7 @@ import 'package:test/test.dart';
 import 'matchers.dart';
 
 void main() {
-  InMemoryAssetReader reader;
+  InMemoryAssetReader? reader;
   final defaultPlatform = DartPlatform.register('test', ['async']);
 
   List<AssetId> makeAssets(Map<String, String> assetDescriptors) {
@@ -27,21 +27,21 @@ void main() {
     var assets = <AssetId>{};
     assetDescriptors.forEach((serializedId, content) {
       var id = AssetId.parse(serializedId);
-      reader.cacheStringAsset(id, content);
+      reader!.cacheStringAsset(id, content);
       assets.add(id);
     });
     return assets.toList();
   }
 
-  Future<MetaModule> metaModuleFromSources(InMemoryAssetReader reader, List<AssetId> sources,
-      {DartPlatform platform}) async {
+  Future<MetaModule> metaModuleFromSources(InMemoryAssetReader? reader, List<AssetId> sources,
+      {DartPlatform? platform}) async {
     platform ??= defaultPlatform;
     final libraries = (await Future.wait(sources
             .where((s) => s.package != r'$sdk')
-            .map((s) async => ModuleLibrary.fromSource(s, await reader.readAsString(s)))))
+            .map((s) async => ModuleLibrary.fromSource(s, await reader!.readAsString(s)))))
         .where((l) => l.isImportable);
     for (final library in libraries) {
-      reader.cacheStringAsset(
+      reader!.cacheStringAsset(
           library.id.changeExtension(moduleLibraryExtension), '${library.serialize()}');
     }
     return MetaModule.forLibraries(
@@ -435,7 +435,7 @@ void main() {
 
     for (var platform in expectedModulesForPlatform.keys) {
       var meta = await metaModuleFromSources(reader, assets, platform: platform);
-      expect(meta.modules, unorderedMatches(expectedModulesForPlatform[platform]),
+      expect(meta.modules, unorderedMatches(expectedModulesForPlatform[platform]!),
           reason: meta.modules.map((m) => m.toJson()).toString());
     }
   });

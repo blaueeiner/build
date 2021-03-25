@@ -1,4 +1,4 @@
-// @dart=2.9
+
 
 library a_imports_b_no_cycle;
 

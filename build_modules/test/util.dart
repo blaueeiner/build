@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
+
 
 import 'dart:async';
 
@@ -12,14 +12,14 @@ import 'package:logging/logging.dart';
 
 /// Forwards to [testBuilder], and adds all output assets to [assets].
 Future<void> testBuilderAndCollectAssets(Builder builder, Map<String, dynamic> assets,
-    {Set<String> generateFor,
-    Map<String, /*String|List<int>|Matcher<String|List<int>>*/ dynamic> outputs,
-    void Function(LogRecord log) onLog,
-    void Function(AssetId, Iterable<AssetId>) reportUnusedAssetsForInput}) async {
+    {Set<String>? generateFor,
+    Map<String, /*String|List<int>|Matcher<String|List<int>>*/ dynamic>? outputs,
+    void Function(LogRecord log)? onLog,
+    void Function(AssetId, Iterable<AssetId>)? reportUnusedAssetsForInput}) async {
   var writer = InMemoryAssetWriter();
-  await testBuilder(builder, assets,
+  await testBuilder(builder, assets as Map<String, Object>,
       generateFor: generateFor,
-      outputs: outputs,
+      outputs: outputs as Map<String, Object>?,
       onLog: onLog,
       reportUnusedAssetsForInput: reportUnusedAssetsForInput,
       writer: writer);

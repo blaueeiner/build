@@ -2,13 +2,12 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
-
 import 'dart:async';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:build/build.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 
 import 'module_library.dart';
 import 'module_library_builder.dart';
@@ -88,18 +87,18 @@ Please check the following imports:\n
 
 /// Checks if [sourceId] directly imports [missingId], and returns an error
 /// message if so.
-Future<String> _missingImportMessage(
+Future<String?> _missingImportMessage(
     AssetId sourceId, AssetId missingId, AssetReader reader) async {
   var contents = await reader.readAsString(sourceId);
   var parsed = parseString(content: contents, throwIfDiagnostics: false).unit;
-  var import = parsed.directives.whereType<UriBasedDirective>().firstWhere((directive) {
-    var uriString = directive.uri.stringValue;
+  var import = parsed.directives.whereType<UriBasedDirective>().firstWhereOrNull((directive) {
+    var uriString = directive.uri.stringValue!;
     if (uriString.startsWith('dart:')) return false;
     var id = AssetId.resolve(Uri.parse(uriString), from: sourceId);
     return id == missingId;
-  }, orElse: () => null);
+  });
   if (import == null) return null;
-  var lineInfo = parsed.lineInfo.getLocation(import.offset);
+  var lineInfo = parsed.lineInfo!.getLocation(import.offset);
   return '`$import` from $sourceId at $lineInfo';
 }
 
@@ -121,7 +120,7 @@ class UnsupportedModules implements Exception {
           // have import statements, so we just skip them.
           continue;
         }
-        if (library.sdkDeps.any((lib) => !module.platform.supportsLibrary(lib))) {
+        if (library.sdkDeps!.any((lib) => !module.platform.supportsLibrary(lib))) {
           yield library;
         }
       }

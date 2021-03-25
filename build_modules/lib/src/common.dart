@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
+
 
 import 'package:build/build.dart';
 import 'package:scratch_space/scratch_space.dart';
@@ -15,7 +15,7 @@ String defaultAnalysisOptionsArg(ScratchSpace scratchSpace) =>
 enum ModuleStrategy { fine, coarse }
 
 ModuleStrategy moduleStrategy(BuilderOptions options) {
-  var config = options.config['strategy'] as String ?? 'coarse';
+  var config = options.config['strategy'] as String? ?? 'coarse';
   switch (config) {
     case 'coarse':
       return ModuleStrategy.coarse;

@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
+
 
 /// A supported "platform" for compilation of Dart libraries.
 ///
@@ -31,8 +31,8 @@ class DartPlatform {
   ///
   /// Throws an [UnrecognizedDartPlatform] if [name] has not been
   /// registered with [DartPlatform.register].
-  static DartPlatform byName(String name) =>
-      _platformsByName[name] ?? (throw UnrecognizedDartPlatform(name));
+  static DartPlatform byName(String? name) =>
+      _platformsByName[name!] ?? (throw UnrecognizedDartPlatform(name));
 
   /// Registers a new [DartPlatform].
   ///
@@ -71,7 +71,7 @@ class DartPlatformAlreadyRegistered implements Exception {
 }
 
 class UnrecognizedDartPlatform implements Exception {
-  final String name;
+  final String? name;
 
   const UnrecognizedDartPlatform(this.name);
 

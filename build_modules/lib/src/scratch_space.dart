@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
+
 
 import 'dart:async';
 import 'dart:convert';
@@ -85,7 +85,7 @@ final scratchSpaceResource = Resource<ScratchSpace>(() {
 /// Returns the new file contents.
 String _scratchSpacePackageConfig(String rootConfig, Uri packageConfigUri) {
   var parsedRootConfig = jsonDecode(rootConfig) as Map<String, dynamic>;
-  var version = parsedRootConfig['configVersion'] as int;
+  var version = parsedRootConfig['configVersion'] as int?;
   if (version != 2) {
     throw UnsupportedError('Unsupported package_config.json version, got $version but only '
         'version 2 is supported.');

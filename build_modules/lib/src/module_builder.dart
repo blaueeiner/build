@@ -2,11 +2,11 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
-
 import 'dart:async';
 
 import 'package:build/build.dart';
+import 'package:build_modules/src/meta_module.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 
 import 'meta_module_clean_builder.dart';
 import 'module_cache.dart';
@@ -34,16 +34,16 @@ class ModuleBuilder implements Builder {
   @override
   Future build(BuildStep buildStep) async {
     final cleanMetaModules = await buildStep.fetchResource(metaModuleCache);
-    final metaModule = await cleanMetaModules.find(
+    final metaModule = await (cleanMetaModules.find(
         AssetId(buildStep.inputId.package, 'lib/${metaModuleCleanExtension(_platform)}'),
-        buildStep);
-    var outputModule = metaModule.modules
-        .firstWhere((m) => m.primarySource == buildStep.inputId, orElse: () => null);
+        buildStep) as FutureOr<MetaModule>);
+    var outputModule =
+        metaModule.modules.firstWhereOrNull((m) => m.primarySource == buildStep.inputId);
     if (outputModule == null) {
       final serializedLibrary =
           await buildStep.readAsString(buildStep.inputId.changeExtension(moduleLibraryExtension));
       final libraryModule = ModuleLibrary.deserialize(buildStep.inputId, serializedLibrary);
-      if (libraryModule.hasMain) {
+      if (libraryModule.hasMain!) {
         outputModule = metaModule.modules.firstWhere((m) => m.sources.contains(buildStep.inputId));
       }
     }

@@ -2,8 +2,6 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
-
 import 'dart:convert';
 
 import 'package:build/build.dart';
@@ -14,21 +12,23 @@ import 'package:test/test.dart';
 void main() {
   group(DecodingCache, () {
     Map<String, int> toBytesCalls;
-    Map<String, int> fromBytesCalls;
-    DecodingCache<String> cache;
-    ResourceManager resourceManager;
+    late Map<String, int> fromBytesCalls;
+    late DecodingCache<String> cache;
+    late ResourceManager resourceManager;
 
     setUp(() async {
       toBytesCalls = {};
       fromBytesCalls = {};
       final resource = DecodingCache.resource<String>((bytes) {
         var decoded = utf8.decode(bytes);
-        fromBytesCalls.putIfAbsent(decoded, () => 0);
-        fromBytesCalls[decoded] += 1;
+        fromBytesCalls
+          ..putIfAbsent(decoded, () => 0)
+          ..update(decoded, (value) => value + 1);
         return decoded;
       }, (value) {
-        toBytesCalls.putIfAbsent(value, () => 0);
-        toBytesCalls[value] += 1;
+        toBytesCalls
+          ..putIfAbsent(value, () => 0)
+          ..update(value, (value) => value + 1);
         return utf8.encode(value);
       });
       resourceManager = ResourceManager();

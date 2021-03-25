@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
+
 
 import 'dart:convert';
 
@@ -13,16 +13,16 @@ import 'package:crypto/crypto.dart';
 import 'meta_module.dart';
 import 'modules.dart';
 
-Map<String, dynamic> _deserialize(List<int> bytes) =>
-    jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+Map<String, dynamic>? _deserialize(List<int> bytes) =>
+    jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>?;
 
 List<int> _serialize(Map<String, dynamic> data) => utf8.encode(jsonEncode(data));
 
 final metaModuleCache = DecodingCache.resource(
-    (m) => MetaModule.fromJson(_deserialize(m)), (m) => _serialize(m.toJson()));
+    (m) => MetaModule.fromJson(_deserialize(m)!), (m) => _serialize(m.toJson()));
 
 final moduleCache =
-    DecodingCache.resource((m) => Module.fromJson(_deserialize(m)), (m) => _serialize(m.toJson()));
+    DecodingCache.resource((m) => Module.fromJson(_deserialize(m)!), (m) => _serialize(m.toJson()));
 
 /// A cache of objects decoded from written assets suitable for use as a
 /// [Resource].
@@ -58,9 +58,9 @@ class DecodingCache<T> {
   /// If the asset at [id] is unreadable the returned future will resolve to
   /// `null`. If the instance is cached it will not be decoded again, but the
   /// content dependencies will be tracked through [reader].
-  Future<T> find(AssetId id, AssetReader reader) async {
+  Future<T?> find(AssetId id, AssetReader reader) async {
     if (!await reader.canRead(id)) return null;
-    _Entry<T> entry;
+    _Entry<T>? entry;
     if (!_cached.containsKey(id)) {
       entry = _cached[id] = _Entry()
         ..needsCheck = false
@@ -68,11 +68,11 @@ class DecodingCache<T> {
         ..digest = Result.capture(reader.digest(id));
     } else {
       entry = _cached[id];
-      if (entry.needsCheck) {
+      if (entry!.needsCheck) {
         await (entry.onGoingCheck ??= () async {
-          var previousDigest = await Result.release(entry.digest);
+          var previousDigest = await Result.release(entry!.digest!);
           entry.digest = Result.capture(reader.digest(id));
-          if (await Result.release(entry.digest) != previousDigest) {
+          if (await Result.release(entry.digest!) != previousDigest) {
             entry.value = Result.capture(reader.readAsBytes(id).then(_fromBytes));
           }
           entry
@@ -98,7 +98,7 @@ class DecodingCache<T> {
 
 class _Entry<T> {
   bool needsCheck = false;
-  Future<Result<T>> value;
-  Future<Result<Digest>> digest;
-  Future<void> onGoingCheck;
+  late Future<Result<T>> value;
+  Future<Result<Digest>>? digest;
+  Future<void>? onGoingCheck;
 }

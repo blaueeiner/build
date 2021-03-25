@@ -2,7 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
+
 
 import 'dart:async';
 import 'dart:collection';
@@ -89,7 +89,7 @@ Future<Set<Module>> _transitiveModules(
   // Ensures we only process a meta file once.
   var seenMetas = <AssetId>{}..add(metaAsset);
   var metaModules = await buildStep.fetchResource(metaModuleCache);
-  var meta = await metaModules.find(buildStep.inputId, buildStep);
+  var meta = await (metaModules.find(buildStep.inputId, buildStep) as FutureOr<MetaModule>);
   var nextModules = List.of(meta.modules);
   while (nextModules.isNotEmpty) {
     var module = nextModules.removeLast();
@@ -115,7 +115,7 @@ Future<Set<Module>> _transitiveModules(
             'on it in your pubspec.');
         continue;
       }
-      var depMeta = await metaModules.find(depMetaAsset, buildStep);
+      var depMeta = await (metaModules.find(depMetaAsset, buildStep) as FutureOr<MetaModule>);
       nextModules.addAll(depMeta.modules);
     }
   }
@@ -137,7 +137,7 @@ Module _mergeComponent(
   var isSupported = true;
   for (var module in connectedComponent) {
     sources.addAll(module.sources);
-    isSupported = isSupported && module.isSupported;
+    isSupported = isSupported && module.isSupported!;
     for (var dep in module.directDependencies) {
       var primaryDep = assetToPrimary[dep];
       if (primaryDep == null) continue;

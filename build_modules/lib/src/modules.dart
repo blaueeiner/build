@@ -2,8 +2,6 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
-
 import 'dart:async';
 import 'dart:collection';
 
@@ -48,7 +46,7 @@ class Module {
       ..removeAll(allSources);
     final primarySource = allSources.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
     final isMissing = modules.any((m) => m.isMissing);
-    final isSupported = modules.every((m) => m.isSupported);
+    final isSupported = modules.every((m) => m.isSupported!);
     return Module(primarySource, allSources, allDependencies, modules.first.platform, isSupported,
         isMissing: isMissing);
   }
@@ -104,13 +102,13 @@ class Module {
   ///
   /// Modules are allowed to exist even if they aren't supported, which can help
   /// with discovering root causes of incompatibility.
-  final bool isSupported;
+  final bool? isSupported;
 
   final DartPlatform platform;
 
   Module(this.primarySource, Iterable<AssetId> sources, Iterable<AssetId> directDependencies,
       this.platform, this.isSupported,
-      {bool isMissing})
+      {bool? isMissing})
       : sources = UnmodifiableSetView(HashSet.of(sources)),
         directDependencies = UnmodifiableSetView(HashSet.of(directDependencies)),
         isMissing = isMissing ?? false;
@@ -131,8 +129,6 @@ class Module {
   Future<List<Module>> computeTransitiveDependencies(BuildStep buildStep,
       {bool throwIfUnsupported = false,
       @deprecated Set<String> skipPlatformCheckPackages = const {}}) async {
-    throwIfUnsupported ??= false;
-    skipPlatformCheckPackages ??= const {};
     final modules = await buildStep.fetchResource(moduleCache);
     var transitiveDeps = <AssetId, Module>{};
     var modulesToCrawl = {primarySource};
@@ -150,7 +146,7 @@ class Module {
         continue;
       }
       if (throwIfUnsupported &&
-          !module.isSupported &&
+          !module.isSupported! &&
           !skipPlatformCheckPackages.contains(module.primarySource.package)) {
         unsupportedModules.add(module);
       }
@@ -167,7 +163,7 @@ class Module {
       throw UnsupportedModules(unsupportedModules);
     }
     var orderedModules = stronglyConnectedComponents<Module>(
-        transitiveDeps.values, (m) => m.directDependencies.map((s) => transitiveDeps[s]),
+        transitiveDeps.values, (m) => m.directDependencies.map((s) => transitiveDeps[s]!),
         equals: (a, b) => a.primarySource == b.primarySource,
         hashCode: (m) => m.primarySource.hashCode);
     return orderedModules.map((c) => c.single).toList();
@@ -188,7 +184,7 @@ class _DartPlatformConverter implements JsonConverter<DartPlatform, String> {
   const _DartPlatformConverter();
 
   @override
-  DartPlatform fromJson(String json) => DartPlatform.byName(json);
+  DartPlatform fromJson(String? json) => DartPlatform.byName(json);
 
   @override
   String toJson(DartPlatform object) => object.name;

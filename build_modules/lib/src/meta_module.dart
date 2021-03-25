@@ -2,8 +2,6 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
-
 import 'dart:async';
 
 import 'package:build/build.dart';
@@ -22,7 +20,7 @@ part 'meta_module.g.dart';
 /// Throws an [ArgumentError] if [path] is just a filename with no directory.
 String _topLevelDir(String path) {
   var parts = p.url.split(p.url.normalize(path));
-  String error;
+  String? error;
   if (parts.length == 1) {
     error = 'The path `$path` does not contain a directory.';
   } else if (parts.first == '..') {
@@ -43,11 +41,11 @@ Module _moduleForComponent(List<ModuleLibrary> componentLibraries, DartPlatform 
   var primaryId = nonSrcIds.isNotEmpty ? nonSrcIds.reduce(_min) : sources.reduce(_min);
   // Expand to include all the part files of each node, these aren't
   // included as individual `_AssetNodes`s in `connectedComponents`.
-  sources.addAll(componentLibraries.expand((n) => n.parts));
+  sources.addAll(componentLibraries.expand((n) => n.parts!));
   var directDependencies = <AssetId>{}
     ..addAll(componentLibraries.expand((n) => n.depsForPlatform(platform)))
     ..removeAll(sources);
-  var isSupported = componentLibraries.expand((l) => l.sdkDeps).every(platform.supportsLibrary);
+  var isSupported = componentLibraries.expand((l) => l.sdkDeps!).every(platform.supportsLibrary);
   return Module(primaryId, sources, directDependencies, platform, isSupported);
 }
 
@@ -136,7 +134,7 @@ List<Module> _mergeModules(Iterable<Module> modules, Set<AssetId> entrypoints) {
       var mId = (entrypointIds.toList()..sort()).map((m) => m.path).join('\$');
       mergedModules.putIfAbsent(mId, () => []).add(module);
     } else {
-      entrypointModuleGroups[entrypointIds.single].add(module);
+      entrypointModuleGroups[entrypointIds.single]!.add(module);
     }
   }
 
@@ -179,11 +177,11 @@ List<Module> _computeModules(Map<AssetId, ModuleLibrary> libraries, DartPlatform
           .depsForPlatform(platform)
           // Only "internal" dependencies
           .where(libraries.containsKey)
-          .map((dep) => libraries[dep]),
+          .map((dep) => libraries[dep]!),
       equals: (a, b) => a.id == b.id,
       hashCode: (l) => l.id.hashCode);
 
-  final entryIds = libraries.values.where((l) => l.isEntryPoint).map((l) => l.id).toSet();
+  final entryIds = libraries.values.where((l) => l.isEntryPoint!).map((l) => l.id).toSet();
   return _mergeModules(connectedComponents.map((c) => _moduleForComponent(c, platform)), entryIds);
 }
 
@@ -197,12 +195,12 @@ class MetaModule {
 
   Map<String, dynamic> toJson() => _$MetaModuleToJson(this);
 
-  static Future<MetaModule> forLibraries(AssetReader reader, List<AssetId> libraryIds,
+  static Future<MetaModule> forLibraries(AssetReader? reader, List<AssetId> libraryIds,
       ModuleStrategy strategy, DartPlatform platform) async {
     var libraries = <ModuleLibrary>[];
     for (var id in libraryIds) {
       libraries.add(ModuleLibrary.deserialize(
-          id.changeExtension('').changeExtension('.dart'), await reader.readAsString(id)));
+          id.changeExtension('').changeExtension('.dart'), await reader!.readAsString(id)));
     }
     switch (strategy) {
       case ModuleStrategy.fine:
@@ -210,19 +208,18 @@ class MetaModule {
       case ModuleStrategy.coarse:
         return _coarseModulesForLibraries(reader, libraries, platform);
     }
-    throw StateError('Unrecognized module strategy $strategy');
   }
 }
 
 MetaModule _coarseModulesForLibraries(
-    AssetReader reader, List<ModuleLibrary> libraries, DartPlatform platform) {
+    AssetReader? reader, List<ModuleLibrary> libraries, DartPlatform platform) {
   var librariesByDirectory = <String, Map<AssetId, ModuleLibrary>>{};
   for (var library in libraries) {
     final dir = _topLevelDir(library.id.path);
     if (!librariesByDirectory.containsKey(dir)) {
       librariesByDirectory[dir] = <AssetId, ModuleLibrary>{};
     }
-    librariesByDirectory[dir][library.id] = library;
+    librariesByDirectory[dir]![library.id] = library;
   }
   final modules =
       librariesByDirectory.values.expand((libs) => _computeModules(libs, platform)).toList();
@@ -231,14 +228,14 @@ MetaModule _coarseModulesForLibraries(
 }
 
 MetaModule _fineModulesForLibraries(
-    AssetReader reader, List<ModuleLibrary> libraries, DartPlatform platform) {
+    AssetReader? reader, List<ModuleLibrary> libraries, DartPlatform platform) {
   var modules = libraries
       .map((library) => Module(
           library.id,
-          library.parts.followedBy([library.id]),
+          library.parts!.followedBy([library.id]),
           library.depsForPlatform(platform),
           platform,
-          library.sdkDeps.every(platform.supportsLibrary)))
+          library.sdkDeps!.every(platform.supportsLibrary)))
       .toList();
   _sortModules(modules);
   return MetaModule(modules);

@@ -2,14 +2,11 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-// @dart=2.9
-
 import 'dart:convert';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:build/build.dart';
-import 'package:meta/meta.dart';
 
 import 'platform.dart';
 
@@ -32,37 +29,37 @@ class ModuleLibrary {
   /// True if the library is in `lib/` but not `lib/src`, or if it is outside of
   /// `lib/` and contains a `main` method. Always false if this is not an
   /// importable library.
-  final bool isEntryPoint;
+  final bool? isEntryPoint;
 
   /// Deps that are imported with a conditional import.
   ///
   /// Keys are the stringified ast node for the conditional, and the default
   /// import is under the magic `$default` key.
-  final List<Map<String, AssetId>> conditionalDeps;
+  final List<Map<String, AssetId>>? conditionalDeps;
 
   /// The IDs of libraries that are imported or exported by this library.
   ///
   /// Null if this is not an importable library.
-  final Set<AssetId> _deps;
+  final Set<AssetId>? _deps;
 
   /// The "part" files for this library.
   ///
   /// Null if this is not an importable library.
-  final Set<AssetId> parts;
+  final Set<AssetId>? parts;
 
   /// The `dart:` libraries that this library directly depends on.
-  final Set<String> sdkDeps;
+  final Set<String>? sdkDeps;
 
   /// Whether this library has a `main` function.
-  final bool hasMain;
+  final bool? hasMain;
 
   ModuleLibrary._(this.id,
-      {@required this.isEntryPoint,
-      @required Set<AssetId> deps,
-      @required this.parts,
-      @required this.conditionalDeps,
-      @required this.sdkDeps,
-      @required this.hasMain})
+      {required this.isEntryPoint,
+      required Set<AssetId> deps,
+      required this.parts,
+      required this.conditionalDeps,
+      required this.sdkDeps,
+      required this.hasMain})
       : _deps = deps,
         isImportable = true;
 
@@ -83,7 +80,7 @@ class ModuleLibrary {
     var conditionalDeps = <Map<String, AssetId>>[];
     for (var directive in parsed.directives) {
       if (directive is! UriBasedDirective) continue;
-      var path = (directive as UriBasedDirective).uri.stringValue;
+      var path = directive.uri.stringValue!;
       var uri = Uri.parse(path);
       if (uri.isScheme('dart-ext')) {
         // TODO: What should we do for native extensions?
@@ -94,13 +91,13 @@ class ModuleLibrary {
         continue;
       }
       var linkedId = AssetId.resolve(uri, from: id);
-      if (linkedId == null) continue;
+
       if (directive is PartDirective) {
         parts.add(linkedId);
         continue;
       }
 
-      List<Configuration> conditionalDirectiveConfigurations;
+      List<Configuration>? conditionalDirectiveConfigurations;
 
       if (directive is ImportDirective && directive.configurations.isNotEmpty) {
         conditionalDirectiveConfigurations = directive.configurations;
@@ -110,12 +107,12 @@ class ModuleLibrary {
       if (conditionalDirectiveConfigurations != null) {
         var conditions = <String, AssetId>{r'$default': linkedId};
         for (var condition in conditionalDirectiveConfigurations) {
-          if (Uri.parse(condition.uri.stringValue).scheme == 'dart') {
+          if (Uri.parse(condition.uri.stringValue!).scheme == 'dart') {
             throw ArgumentError('Unsupported conditional import of '
                 '`${condition.uri.stringValue}` found in $id.');
           }
           conditions[condition.name.toSource()] =
-              AssetId.resolve(Uri.parse(condition.uri.stringValue), from: id);
+              AssetId.resolve(Uri.parse(condition.uri.stringValue!), from: id);
         }
         conditionalDeps.add(conditions);
       } else {
@@ -139,7 +136,7 @@ class ModuleLibrary {
     // used outside the SDK.
     if (parsed.directives.any((d) =>
         d is UriBasedDirective &&
-        d.uri.stringValue.startsWith('dart:_') &&
+        d.uri.stringValue!.startsWith('dart:_') &&
         id.package != 'dart_internal')) {
       return ModuleLibrary._nonImportable(id);
     }
@@ -159,7 +156,7 @@ class ModuleLibrary {
     var json = jsonDecode(encoded);
 
     return ModuleLibrary._(id,
-        isEntryPoint: json['isEntrypoint'] as bool,
+        isEntryPoint: json['isEntrypoint'] as bool?,
         deps: _deserializeAssetIds(json['deps'] as Iterable),
         parts: _deserializeAssetIds(json['parts'] as Iterable),
         sdkDeps: Set.of((json['sdkDeps'] as Iterable).cast<String>()),
@@ -167,38 +164,41 @@ class ModuleLibrary {
           return Map.of((conditions as Map<String, dynamic>)
               .map((k, v) => MapEntry(k, AssetId.parse(v as String))));
         }).toList(),
-        hasMain: json['hasMain'] as bool);
+        hasMain: json['hasMain'] as bool?);
   }
 
   String serialize() => jsonEncode({
         'isEntrypoint': isEntryPoint,
-        'deps': _deps.map((id) => id.toString()).toList(),
-        'parts': parts.map((id) => id.toString()).toList(),
-        'conditionalDeps': conditionalDeps
+        'deps': _deps!.map((id) => id.toString()).toList(),
+        'parts': parts!.map((id) => id.toString()).toList(),
+        'conditionalDeps': conditionalDeps!
             .map((conditions) => conditions.map((k, v) => MapEntry(k, v.toString())))
             .toList(),
-        'sdkDeps': sdkDeps.toList(),
+        'sdkDeps': sdkDeps!.toList(),
         'hasMain': hasMain,
       });
 
   List<AssetId> depsForPlatform(DartPlatform platform) {
-    return _deps.followedBy(conditionalDeps.map((conditions) {
-      var selectedImport = conditions[r'$default'];
-      assert(selectedImport != null);
-      for (var condition in conditions.keys) {
-        if (condition == r'$default') continue;
-        if (!condition.startsWith('dart.library.')) {
-          throw UnsupportedError('$condition not supported for config specific imports. Only the '
-              'dart.library.<name> constants are supported.');
-        }
-        var library = condition.substring('dart.library.'.length);
-        if (platform.supportsLibrary(library)) {
-          selectedImport = conditions[condition];
-          break;
-        }
-      }
-      return selectedImport;
-    })).toList();
+    return _deps!
+        .followedBy(conditionalDeps!.map((conditions) {
+          var selectedImport = conditions[r'$default']!;
+
+          for (var condition in conditions.keys) {
+            if (condition == r'$default') continue;
+            if (!condition.startsWith('dart.library.')) {
+              throw UnsupportedError(
+                  '$condition not supported for config specific imports. Only the '
+                  'dart.library.<name> constants are supported.');
+            }
+            var library = condition.substring('dart.library.'.length);
+            if (platform.supportsLibrary(library)) {
+              selectedImport = conditions[condition]!;
+              break;
+            }
+          }
+          return selectedImport;
+        }))
+        .toList();
   }
 }
 
@@ -216,4 +216,4 @@ bool _isPart(CompilationUnit dart) =>
 bool _hasMainMethod(CompilationUnit dart) => dart.declarations.any((node) =>
     node is FunctionDeclaration &&
     node.name.name == 'main' &&
-    node.functionExpression.parameters.parameters.length <= 2);
+    node.functionExpression.parameters!.parameters.length <= 2);
