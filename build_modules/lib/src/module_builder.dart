@@ -5,7 +5,6 @@
 import 'dart:async';
 
 import 'package:build/build.dart';
-import 'package:build_modules/src/meta_module.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 
 import 'meta_module_clean_builder.dart';
@@ -34,11 +33,11 @@ class ModuleBuilder implements Builder {
   @override
   Future build(BuildStep buildStep) async {
     final cleanMetaModules = await buildStep.fetchResource(metaModuleCache);
-    final metaModule = await (cleanMetaModules.find(
+    final metaModule = await cleanMetaModules.find(
         AssetId(buildStep.inputId.package, 'lib/${metaModuleCleanExtension(_platform)}'),
-        buildStep) as FutureOr<MetaModule>);
+        buildStep);
     var outputModule =
-        metaModule.modules.firstWhereOrNull((m) => m.primarySource == buildStep.inputId);
+        metaModule!.modules.firstWhereOrNull((m) => m.primarySource == buildStep.inputId);
     if (outputModule == null) {
       final serializedLibrary =
           await buildStep.readAsString(buildStep.inputId.changeExtension(moduleLibraryExtension));

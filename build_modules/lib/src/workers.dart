@@ -255,7 +255,7 @@ class _Dart2JsWorker {
     while (tryCount < _retryCountMax && !succeeded) {
       tryCount++;
       _jobsSinceLastRestartCount++;
-      var worker = await (_worker as FutureOr<Process>);
+      var worker = await _worker;
       var output = StringBuffer();
       _currentJobResult = Completer<Dart2JsResult>();
       var sawError = false;
@@ -278,7 +278,7 @@ class _Dart2JsWorker {
       });
 
       log.info('Running dart2js with ${job.args.join(' ')}\n');
-      worker.stdin.writeln(job.args.map(_prepareArg).join(' '));
+      worker!.stdin.writeln(job.args.map(_prepareArg).join(' '));
 
       Dart2JsResult result;
       try {

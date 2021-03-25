@@ -2,8 +2,6 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-
-
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
@@ -89,8 +87,8 @@ Future<Set<Module>> _transitiveModules(
   // Ensures we only process a meta file once.
   var seenMetas = <AssetId>{}..add(metaAsset);
   var metaModules = await buildStep.fetchResource(metaModuleCache);
-  var meta = await (metaModules.find(buildStep.inputId, buildStep) as FutureOr<MetaModule>);
-  var nextModules = List.of(meta.modules);
+  var meta = await metaModules.find(buildStep.inputId, buildStep);
+  var nextModules = List.of(meta!.modules);
   while (nextModules.isNotEmpty) {
     var module = nextModules.removeLast();
     dependentModules.add(module);
@@ -115,8 +113,8 @@ Future<Set<Module>> _transitiveModules(
             'on it in your pubspec.');
         continue;
       }
-      var depMeta = await (metaModules.find(depMetaAsset, buildStep) as FutureOr<MetaModule>);
-      nextModules.addAll(depMeta.modules);
+      var depMeta = await metaModules.find(depMetaAsset, buildStep);
+      nextModules.addAll(depMeta!.modules);
     }
   }
   return dependentModules;

@@ -2,8 +2,6 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-
-
 import 'dart:convert';
 
 import 'package:build/build.dart';
@@ -16,13 +14,13 @@ import 'package:test/test.dart';
 import 'util.dart';
 
 void main() {
-  late Map<String, dynamic> assets;
+  late Map<String, Object> assets;
   final platform = DartPlatform.register('ddc', ['dart:html']);
   final kernelOutputExtension = '.test.dill';
 
   group('basic project', () {
     setUp(() async {
-      assets = {
+      assets = <String, Object>{
         'b|lib/b.dart': '''final world = 'world';''',
         'a|lib/a.dart': r'''
         import 'package:b/b.dart';
